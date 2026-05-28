@@ -1,7 +1,11 @@
 // Production Environment Config
 window.VITE_API_URL = "__VITE_API_URL__";
 if (window.VITE_API_URL.startsWith("__VITE_API_URL")) {
-    window.VITE_API_URL = "http://localhost:5000";
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+        window.VITE_API_URL = "http://localhost:5000";
+    } else {
+        window.VITE_API_URL = "https://emitra-sathi-backend.onrender.com";
+    }
 }
 console.log("eMitra Sathi Backend API URL initialized:", window.VITE_API_URL);
 

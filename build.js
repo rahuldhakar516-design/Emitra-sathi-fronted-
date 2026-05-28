@@ -25,7 +25,7 @@ const textFiles = [
     'firebase_sync.js'
 ];
 
-const viteApiUrl = process.env.VITE_API_URL || 'http://localhost:5000';
+const viteApiUrl = process.env.VITE_API_URL || 'https://emitra-sathi-backend.onrender.com';
 console.log(`Building frontend... Injecting VITE_API_URL: "${viteApiUrl}"`);
 
 // Process text files
