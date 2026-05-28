@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('cyberThemeColor');
+            if(savedTheme) {
+                document.documentElement.style.setProperty('--primary-color', savedTheme);
+            }
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - eMitra Sathi</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2" style="background: #00ff88;"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- MAIN LOGIN CARD -->
+    <div class="auth-wrapper" id="loginWrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fa-solid fa-desktop" style="font-size: 3.5rem; color: var(--primary-color);"></i>
+            </div>
+            <h2>Operator Portal</h2>
+            <p>Welcome back to eMitra Sathi</p>
+
+            <form id="loginForm" class="auth-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="userid" placeholder="Master ID / Username" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="Password" required>
+                    <i class="fa-solid fa-eye toggle-pwd" id="toggleLoginPwd"></i>
+                </div>
+                <div class="error-msg" id="loginError"></div>
+                <button type="submit" class="auth-btn">Login</button>
+            </form>
+            
+            <a href="#" class="forgot-link" id="openForgotBtn">Forgot Password?</a>
+            <br>
+            <a href="#" class="forgot-link" id="openRegisterBtn" style="color: #fff; margin-top: 15px; font-weight: 500;">New Operator? Create Account</a>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD (PIN VERIFICATION) -->
+    <div class="auth-wrapper hidden" id="pinWrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: #ff007a;"></i>
+            </div>
+            <h2>Verify Identity</h2>
+            <p>Please enter your 6-digit Secret PIN</p>
+
+            <form id="pinForm" class="auth-form">
+                <div class="input-group pin-group">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="secretPin" placeholder="6-Digit PIN" maxlength="6" required autocomplete="off">
+                </div>
+                <div class="error-msg" id="pinError"></div>
+                <button type="submit" class="auth-btn" style="background: var(--secondary-gradient);">Verify PIN</button>
+            </form>
+            
+            <a href="#" class="forgot-link" id="backToLoginFromPin">Back to Login</a>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD -->
+    <div class="auth-wrapper hidden" id="resetPwdWrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fa-solid fa-lock-open" style="font-size: 3.5rem; color: #00ff88;"></i>
+            </div>
+            <h2>Set New Password</h2>
+            <p>Verification successful. Choose a new password.</p>
+
+            <form id="resetForm" class="auth-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="newPwd" placeholder="New Password" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-check-double"></i>
+                    <input type="password" id="confirmPwd" placeholder="Confirm Password" required>
+                </div>
+                <div class="error-msg" id="resetError"></div>
+                <div class="success-msg" id="resetSuccess"></div>
+                <button type="submit" class="auth-btn" style="background: linear-gradient(135deg, #00ff88 0%, #00bfff 100%);">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- REGISTRATION MODAL -->
+    <div class="auth-wrapper hidden" id="registerWrapper" style="max-width: 650px;">
+        <div class="auth-card" style="padding: 30px;">
+            <div class="auth-logo">
+                <i class="fa-solid fa-address-card" style="font-size: 3rem; color: #00f0ff;"></i>
+            </div>
+            <h2>Operator Registration</h2>
+            <p style="margin-bottom: 20px;">Join the portal to manage your daily tasks.</p>
+
+            <form id="registerForm" class="auth-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+                <!-- Left Col -->
+                <div style="grid-column: span 2;">
+                    <label style="color:#00f0ff; font-size:0.85rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Personal Details</label>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="regName" placeholder="Full Name *" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-at"></i>
+                    <input type="text" id="regUsername" placeholder="Choose Username *" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="text" id="regMobile" placeholder="Mobile Number *" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="text" id="regAadhar" placeholder="Aadhar Number *" required>
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="regEmail" placeholder="Gmail Address *" required>
+                </div>
+
+                <!-- Pass && Security -->
+                <div style="grid-column: span 2; margin-top: 10px;">
+                    <label style="color:#ff007a; font-size:0.85rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Security Details</label>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="regPassword" placeholder="Create Password *" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-circle-question" style="z-index: 2;"></i>
+                    <select id="regSecurityQ" style="position:relative; width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); padding: 15px 15px 15px 45px; border-radius: 12px; color: #fff; outline: none; appearance: none; cursor:pointer;" required>
+                        <option value="" disabled selected>Security Question...</option>
+                        <option value="pet" style="color: #000;">What is your first pet's name?</option>
+                        <option value="school" style="color: #000;">What is your first school's name?</option>
+                        <option value="city" style="color: #000;">In what city were you born?</option>
+                    </select>
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="text" id="regSecurityA" placeholder="Security Answer (Keep secret) *" required>
+                </div>
+
+                <!-- Shop && Photos -->
+                <div style="grid-column: span 2; margin-top: 10px;">
+                    <label style="color:#00ff88; font-size:0.85rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Shop & Identification</label>
+                </div>
+                <div class="input-group" style="grid-column: span 2;">
+                    <i class="fa-solid fa-store"></i>
+                    <input type="text" id="regShopName" placeholder="Shop / Business Name *" required>
+                </div>
+                <div class="input-group">
+                    <label style="color:#aaa; font-size:0.8rem; display:block; margin-bottom:5px;">Operator Photo *</label>
+                    <input type="file" id="regProfilePic" accept="image/*" style="padding:10px; padding-left:10px;" required>
+                </div>
+                <div class="input-group">
+                    <label style="color:#aaa; font-size:0.8rem; display:block; margin-bottom:5px;">Shop Photo *</label>
+                    <input type="file" id="regShopPic" accept="image/*" style="padding:10px; padding-left:10px;" required>
+                </div>
+
+                <div class="error-msg" id="regError" style="grid-column: span 2; text-align:center;"></div>
+                
+                <button type="submit" class="auth-btn" id="regSubmitBtn" style="grid-column: span 2; background: linear-gradient(135deg, #00f0ff 0%, #007aff 100%);">Complete Registration</button>
+            </form>
+            
+            <a href="#" class="forgot-link" id="backToLoginFromReg" style="color: #fff;">Already have an account? Login</a>
+        </div>
+    </div>
+
+    <!-- SET LOGIN PIN MODAL (Registration Step 2) -->
+    <div class="auth-wrapper hidden" id="setPinWrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fa-solid fa-key" style="font-size: 3.5rem; color: #ff007a;"></i>
+            </div>
+            <h2>Set Login PIN</h2>
+            <p>Create a 6-digit PIN for quick verification and password recovery.</p>
+
+            <form id="setPinForm" class="auth-form">
+                <div class="input-group pin-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="newRegPin" placeholder="Enter 6-Digit PIN" maxlength="6" pattern="\d{6}" title="Exactly 6 digits required" required autocomplete="off">
+                </div>
+                <div class="error-msg" id="setPinError"></div>
+                <button type="submit" class="auth-btn" style="background: var(--secondary-gradient);" id="setPinBtn">Save PIN & Register</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- IDENTIFY ACCOUNT FOR FORGOT PASSWORD -->
+    <div class="auth-wrapper hidden" id="identifyWrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fa-solid fa-user-shield" style="font-size: 3.5rem; color: #00f0ff;"></i>
+            </div>
+            <h2>Find Your Account</h2>
+            <p>Please enter your Username or Mobile Number.</p>
+
+            <form id="identifyForm" class="auth-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="identifyUserId" placeholder="Username / Mobile Number" required autocomplete="off">
+                </div>
+                <div class="error-msg" id="identifyError"></div>
+                <button type="submit" class="auth-btn">Next</button>
+            </form>
+            <a href="#" class="forgot-link" id="backToLoginFromIdentify">Back to Login</a>
+        </div>
+    </div>
+
+    <!-- Floating Help Button for Unauthenticated Users -->
+    <div id="floatingHelpBtn" style="position: fixed; bottom: 20px; right: 20px; background: #00f0ff; color: #000; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,240,255,0.4); z-index: 1000; transition: transform 0.2s;" onclick="document.getElementById('publicHelpModal').classList.remove('hidden')" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <i class="fa-solid fa-headset"></i>
+    </div>
+
+    <!-- Public Help Modal -->
+    <style>
+        .help-hidden { display: none !important; }
+        .help-modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
+    </style>
+    <div class="help-modal-overlay hidden" id="publicHelpModal">
+        <div class="auth-card" style="width: 90%; max-width: 450px; position: relative; border: 1px solid #00f0ff; background: #0a0f19;">
+            <button onclick="document.getElementById('publicHelpModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
+            <h2 style="color:#00f0ff; margin-bottom:15px; text-align: left;"><i class="fa-solid fa-envelope"></i> Ask for Help</h2>
+            <p style="color:#aaa; font-size:0.9rem; margin-bottom:20px; text-align: left;">Account pending? Forgot ID? Send a direct message to the Master Admin.</p>
+            
+            <input type="text" id="helpName" placeholder="Your Name" style="width:100%; padding:12px; margin-bottom:12px; background:rgba(0,0,0,0.5); border:1px solid var(--border); color:#fff; border-radius:6px; outline: none;" required>
+            <input type="text" id="helpMobile" placeholder="Your Mobile Number" style="width:100%; padding:12px; margin-bottom:12px; background:rgba(0,0,0,0.5); border:1px solid var(--border); color:#fff; border-radius:6px; outline: none;" required>
+            <textarea id="helpText" placeholder="Describe your issue here..." style="width:100%; height:120px; padding:12px; margin-bottom:20px; background:rgba(0,0,0,0.5); border:1px solid var(--border); color:#fff; border-radius:6px; font-family:inherit; outline: none;" required></textarea>
+            
+            <button onclick="sendPublicHelp()" class="auth-btn" style="background: linear-gradient(135deg, #00f0ff 0%, #007aff 100%);">Send Message to Admin</button>
+        </div>
+    </div>
+
+    <script>
+        // Data Configuration
+        const DEFAULT_USER_ID = "9111301292";
+        const SECRET_PIN = "301292";
+        
+        async function getValidPassword() {
+            try {
+                const snap = await db.ref('cyberCafePwd').once('value');
+                return snap.exists() ? snap.val() : "Rahul@123";
+            } catch(e) { return "Rahul@123"; }
+        }
+
+        async function getOperators() {
+            try {
+                const snap = await db.ref('cyberCafeOperators').once('value');
+                if (!snap.exists()) return [];
+                const data = snap.val();
+                if (Array.isArray(data)) return data.filter(Boolean);
+                return Object.values(data).filter(Boolean);
+            } catch(e) { return []; }
+        }
+
+        async function saveOperators(ops) {
+            await db.ref('cyberCafeOperators').set(ops);
+        }
+
+        // DOM Elements
+        const loginWrapper = document.getElementById('loginWrapper');
+        const pinWrapper = document.getElementById('pinWrapper');
+        const resetPwdWrapper = document.getElementById('resetPwdWrapper');
+        const registerWrapper = document.getElementById('registerWrapper');
+        const identifyWrapper = document.getElementById('identifyWrapper');
+        const setPinWrapper = document.getElementById('setPinWrapper');
+        
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        
+        const pinForm = document.getElementById('pinForm');
+        const pinError = document.getElementById('pinError');
+        
+        const resetForm = document.getElementById('resetForm');
+        const resetError = document.getElementById('resetError');
+        const resetSuccess = document.getElementById('resetSuccess');
+        
+        const registerForm = document.getElementById('registerForm');
+        const regError = document.getElementById('regError');
+
+        const identifyForm = document.getElementById('identifyForm');
+        const identifyError = document.getElementById('identifyError');
+
+        const setPinForm = document.getElementById('setPinForm');
+        const setPinError = document.getElementById('setPinError');
+        
+        let tempOpData = null; // Store registration data before pin
+        let resettingUser = null; // Store user being reset
+        
+        // Image Compression Utility
+        function compressImage(file, callback) {
+            if(!file) return callback(null);
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300; // Keep very tiny for localStorage
+                    let scaleSize = MAX_WIDTH / img.width;
+                    if(scaleSize > 1) scaleSize = 1; // don't scale up
+                    canvas.width = img.width * scaleSize;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality
+                    callback(dataUrl);
+                }
+            }
+        }
+
+        // Toggle Password Visibility
+        document.getElementById('toggleLoginPwd').addEventListener('click', function() {
+            const pwdInput = document.getElementById('password');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                this.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                this.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+
+        // Login Logic
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('userid').value.trim();
+            const pwd = document.getElementById('password').value.trim();
+            
+            loginForm.querySelector('.auth-btn').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+            
+            // Allow Operators Support
+            const operators = await getOperators();
+            const opMatch = operators.find(o => (o.username === id || o.mobile === id) && o.password === pwd);
+            
+            const validPwd = await getValidPassword();
+            
+            if (id === DEFAULT_USER_ID && pwd === String(validPwd)) {
+                // Admin Login
+                sessionStorage.setItem('cyberCafeAuth', JSON.stringify({ role: 'admin', id: id, name: 'Admin (Master)' }));
+                loginError.textContent = "";
+                loginForm.querySelector('.auth-btn').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+                setTimeout(() => { window.location.href = 'index.html'; }, 800);
+            } else if (opMatch) {
+                // Operator Login
+                if (opMatch.blacklisted === true) {
+                    loginError.style.color = '#ff4757';
+                    loginError.textContent = "Access Denied: Your account is blocked by Admin.";
+                    document.getElementById('password').value = '';
+                } else if (opMatch.status !== 'active') {
+                    loginError.style.color = 'orange';
+                    loginError.textContent = "Access Denied: Account is pending Admin Approval.";
+                    document.getElementById('password').value = '';
+                    setTimeout(() => loginError.style.color = '#ff4757', 2000);
+                } else {
+                    sessionStorage.setItem('cyberCafeAuth', JSON.stringify({ role: 'operator', id: opMatch.mobile, name: opMatch.name, paymentStatus: opMatch.paymentStatus || 'paid' }));
+                    sessionStorage.removeItem('cyberPopupShown');
+                    loginError.textContent = "";
+                    setTimeout(() => { window.location.href = 'index.html'; }, 800);
+                }
+            } else {
+                loginError.textContent = "Invalid User ID or Password!";
+                document.getElementById('password').value = '';
+                loginForm.querySelector('.auth-btn').innerHTML = 'Login';
+            }
+        });
+
+        // Navigation
+        document.getElementById('openForgotBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginWrapper.classList.add('hidden');
+            identifyWrapper.classList.remove('hidden');
+            document.getElementById('identifyUserId').value = '';
+            identifyError.textContent = "";
+        });
+
+        document.getElementById('openRegisterBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginWrapper.classList.add('hidden');
+            registerWrapper.classList.remove('hidden');
+            regError.textContent = "";
+        });
+
+        document.getElementById('backToLoginFromPin').addEventListener('click', (e) => {
+            e.preventDefault();
+            pinWrapper.classList.add('hidden');
+            loginWrapper.classList.remove('hidden');
+        });
+
+        document.getElementById('backToLoginFromReg').addEventListener('click', (e) => {
+            e.preventDefault();
+            registerWrapper.classList.add('hidden');
+            loginWrapper.classList.remove('hidden');
+        });
+
+        document.getElementById('backToLoginFromIdentify').addEventListener('click', (e) => {
+            e.preventDefault();
+            identifyWrapper.classList.add('hidden');
+            loginWrapper.classList.remove('hidden');
+        });
+
+        // Identify Account Logic
+        identifyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputId = document.getElementById('identifyUserId').value.trim();
+            
+            if (inputId === DEFAULT_USER_ID) {
+                resettingUser = 'admin';
+                identifyWrapper.classList.add('hidden');
+                pinWrapper.classList.remove('hidden');
+                document.getElementById('secretPin').value = '';
+                pinError.textContent = "";
+            } else {
+                const operators = await getOperators();
+                const opMatch = operators.find(o => o.username === inputId.toLowerCase() || o.mobile === inputId);
+                if (opMatch) {
+                    resettingUser = opMatch.mobile; // store mobile to identify
+                    identifyWrapper.classList.add('hidden');
+                    pinWrapper.classList.remove('hidden');
+                    document.getElementById('secretPin').value = '';
+                    pinError.textContent = "";
+                } else {
+                    identifyError.textContent = "Account not found!";
+                }
+            }
+        });
+
+        // PIN Verification
+        pinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const enteredPin = document.getElementById('secretPin').value.trim();
+            
+            let isValid = false;
+            
+            if (resettingUser === 'admin') {
+                if (enteredPin === SECRET_PIN) isValid = true;
+            } else {
+                const operators = await getOperators();
+                const opMatch = operators.find(o => o.mobile === resettingUser);
+                if (opMatch && opMatch.loginPin && opMatch.loginPin === enteredPin) {
+                    isValid = true;
+                }
+            }
+
+            if (isValid) {
+                pinWrapper.classList.add('hidden');
+                resetPwdWrapper.classList.remove('hidden');
+                resetError.textContent = "";
+                document.getElementById('newPwd').value = '';
+                document.getElementById('confirmPwd').value = '';
+            } else {
+                pinError.textContent = "Incorrect PIN! Access Denied.";
+            }
+        });
+
+        // Reset Password Logic
+        resetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nPwd = document.getElementById('newPwd').value.trim();
+            const cPwd = document.getElementById('confirmPwd').value.trim();
+            
+            if (nPwd.length < 6) {
+                resetError.textContent = "Password must be at least 6 characters!";
+                return;
+            }
+            if (nPwd !== cPwd) {
+                resetError.textContent = "Passwords do not match!";
+                return;
+            }
+            
+            // Save and Redirect
+            if (resettingUser === 'admin') {
+                await db.ref('cyberCafePwd').set(nPwd);
+            } else {
+                const operators = await getOperators();
+                const opIndex = operators.findIndex(o => o.mobile === resettingUser);
+                if (opIndex > -1) {
+                    operators[opIndex].password = nPwd;
+                    await saveOperators(operators);
+                }
+            }
+            
+            resetError.textContent = "";
+            resetSuccess.textContent = "Password updated successfully!";
+            
+            setTimeout(() => {
+                resetPwdWrapper.classList.add('hidden');
+                loginWrapper.classList.remove('hidden');
+                resetSuccess.textContent = ""; // clear
+                document.getElementById('password').value = ''; // clear login pwd
+                resettingUser = null; // clear state
+            }, 1500);
+        });
+
+        // Registration Logic
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regSubmitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+            regError.style.color = '#ff4757';
+            
+            const mobile = document.getElementById('regMobile').value.trim();
+            const username = document.getElementById('regUsername').value.trim().toLowerCase();
+            
+            if(username === DEFAULT_USER_ID || mobile === DEFAULT_USER_ID) {
+                regError.textContent = "Cannot register with the Master Admin ID.";
+                btn.innerHTML = 'Complete Registration'; btn.disabled = false;
+                return;
+            }
+            
+            const operators = await getOperators();
+            if(operators.find(o => o.mobile === mobile)) {
+                regError.textContent = "This Mobile Number is already registered.";
+                btn.innerHTML = 'Complete Registration'; btn.disabled = false;
+                return;
+            }
+            if(operators.find(o => o.username === username)) {
+                regError.textContent = "This Username is already taken.";
+                btn.innerHTML = 'Complete Registration'; btn.disabled = false;
+                return;
+            }
+
+            const picFile = document.getElementById('regProfilePic').files[0];
+            const shopFile = document.getElementById('regShopPic').files[0];
+
+            // Compress Profile Pic first
+            compressImage(picFile, (profileBase64) => {
+                // Compress Shop Pic next
+                compressImage(shopFile, (shopBase64) => {
+                    const newOp = {
+                        name: document.getElementById('regName').value.trim(),
+                        username: username,
+                        mobile: mobile,
+                        aadhar: document.getElementById('regAadhar').value.trim(),
+                        email: document.getElementById('regEmail').value.trim(),
+                        password: document.getElementById('regPassword').value.trim(),
+                        securityQ: document.getElementById('regSecurityQ').value,
+                        securityA: document.getElementById('regSecurityA').value.trim(),
+                        shopName: document.getElementById('regShopName').value.trim(),
+                        photo: profileBase64,
+                        shopPhoto: shopBase64,
+                        status: 'pending',
+                        paymentStatus: 'unpaid',
+                        utrNumber: '',
+                        registrationDate: new Date().toLocaleDateString('en-GB'),
+                        allowedServices: []
+                    };
+                    
+                    tempOpData = newOp; // Save temp data
+                    registerWrapper.classList.add('hidden');
+                    setPinWrapper.classList.remove('hidden');
+                    document.getElementById('newRegPin').value = '';
+                    setPinError.textContent = '';
+                    
+                    btn.innerHTML = 'Complete Registration'; btn.disabled = false;
+                });
+            });
+        });
+
+        // Set PIN Logic (Registration Step 2)
+        setPinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pin = document.getElementById('newRegPin').value.trim();
+            if(pin.length !== 6) {
+                setPinError.textContent = "PIN must be exactly 6 digits.";
+                return;
+            }
+
+            tempOpData.loginPin = pin; // Add the pin
+
+            const operators = await getOperators();
+            operators.push(tempOpData);
+            await saveOperators(operators);
+            
+            setPinError.style.color = '#00ff88';
+            setPinError.textContent = "Registration Successful! Redirecting to login...";
+            
+            const savedMobile = tempOpData.mobile;
+            tempOpData = null;
+
+            setTimeout(() => {
+                registerForm.reset();
+                setPinForm.reset();
+                setPinWrapper.classList.add('hidden');
+                loginWrapper.classList.remove('hidden');
+                document.getElementById('userid').value = savedMobile; // auto-fill
+                setPinError.style.color = '#ff4757'; // reset color
+                setPinError.textContent = '';
+            }, 1500);
+        });
+
+        // Public Help Courier
+        async function sendPublicHelp() {
+            const name = document.getElementById('helpName').value.trim();
+            const mobile = document.getElementById('helpMobile').value.trim();
+            const text = document.getElementById('helpText').value.trim();
+            
+            if(!name || !mobile || !text) return alert("Please fill all fields");
+            
+            const snap = await db.ref('cyberCafeMessages').once('value');
+            let messages = snap.exists() ? snap.val() : [];
+            let newMsg = {
+                mobile: mobile,
+                senderName: name + " (Guest)",
+                text: text,
+                date: new Date().toLocaleString(),
+                reply: null
+            };
+            messages.push(newMsg);
+            
+            await db.ref('cyberCafeMessages').set(messages);
+            
+            document.getElementById('publicHelpModal').classList.remove('active');
+            document.getElementById('helpText').value = '';
+            alert("Message securely sent to the Master Administrator! They will check your Mobile Number.");
+        }
+    </script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="firebase_config.js"></script>
+    <script src="firebase_sync.js"></script>
+</body>
+</html>
