@@ -1597,8 +1597,6 @@ STRICT OPERATOR GUIDELINES:
 
                 if (opStatusChanged) {
                     setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    setTimeout(() => window.location.reload(), 1000);
                 }
             }
         }
