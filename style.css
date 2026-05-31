@@ -1395,17 +1395,3 @@ body.light-theme #membershipHistoryBtn,
 body.light-theme #activityLogBtn {
     border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
-
-/* Center the Operator Registration Modal simply on screen without any scrolling system */
-#registerWrapper {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#registerWrapper .auth-card {
-    width: 100%;
-}
-
-
