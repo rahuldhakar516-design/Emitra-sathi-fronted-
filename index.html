@@ -48,9 +48,27 @@
         </div>
     </div>
 
+    <!-- Mobile Top Header Bar -->
+    <div class="mobile-top-nav">
+        <button id="mobileSidebarToggle" class="mobile-menu-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="logo">
+            <i class="fa-solid fa-desktop"></i>
+            <h2>eMitra<span> Sathi</span></h2>
+        </div>
+        <div style="width: 44px;"></div> <!-- placeholder to keep logo centered -->
+    </div>
+
+    <!-- Sidebar Backdrop Overlay -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
+            <button id="mobileSidebarClose" class="sidebar-close-btn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
             <div class="sidebar-header">
                 <div class="logo">
                     <i class="fa-solid fa-desktop"></i>
@@ -152,7 +170,7 @@
                 <button type="submit" class="btn-add" style="grid-column: 1 / -1; margin-top: 5px;">Add Record</button>
             </form>
 
-            <div style="max-height: 400px; overflow-y: auto;">
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                 <table class="ledger-table">
                     <thead>
                         <tr>
@@ -214,7 +232,7 @@
                 </form>
             </div>
 
-            <div style="max-height: 250px; overflow-y: auto; margin-top: 20px;">
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto; margin-top: 20px;">
                 <table class="ledger-table">
                     <thead>
                         <tr>
@@ -381,7 +399,7 @@
                 <!-- JS populated active plan summary -->
             </div>
 
-            <div style="max-height: 350px; overflow-y: auto;">
+            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                 <table class="ledger-table">
                     <thead>
                         <tr>

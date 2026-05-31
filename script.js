@@ -1603,34 +1603,47 @@ STRICT OPERATOR GUIDELINES:
     };
 });
 
-document.addEventListener('firebaseSynced', () => {
-    // When Firebase syncs data to localStorage (cross-device), trigger renders
-    services = JSON.parse(localStorage.getItem('cyberCafeServices')) || [];
+document.addEventListener('firebaseSynced', (e) => {
+    // When Firebase syncs data to localStorage, selectively refresh only related UI parts
+    const changedKey = e.detail ? e.detail.key : null;
     
-    cyberCategories = JSON.parse(localStorage.getItem('cyberCafeCategories')) || cyberCategories;
-    updateCategoryNames();
+    // 1. Refresh Services & Categories (Only if specifically changed)
+    if (!changedKey || ['cyberCafeServices', 'cyberCafeCategories', 'cyberHighlightConfig'].includes(changedKey)) {
+        services = JSON.parse(localStorage.getItem('cyberCafeServices')) || [];
+        cyberCategories = JSON.parse(localStorage.getItem('cyberCafeCategories')) || cyberCategories;
+        updateCategoryNames();
 
-    if (typeof renderDynamicCategories === 'function') {
-        renderDynamicCategories();
-    } else if (typeof renderCards === 'function') {
-        renderCards();
+        if (typeof renderDynamicCategories === 'function') {
+            renderDynamicCategories();
+        } else if (typeof renderCards === 'function') {
+            renderCards();
+        }
     }
     
-    if (typeof renderProfile === 'function') {
-        renderProfile();
+    // 2. Refresh Profile (Only if specifically changed)
+    if (!changedKey || changedKey === 'cyberCafeProfile') {
+        if (typeof renderProfile === 'function') {
+            renderProfile();
+        }
     }
     
-    if (typeof window.applyAdvancedConfigs === 'function') {
-        window.applyAdvancedConfigs();
+    // 3. Refresh Theme, Marquee Notes, and Popups (Only if related configs changed)
+    if (!changedKey || ['cyberThemeColor', 'cyberNotesConfig', 'cyberPopupConfig', 'cyberCafeAlert'].includes(changedKey)) {
+        if (typeof window.applyAdvancedConfigs === 'function') {
+            window.applyAdvancedConfigs();
+        }
     }
     
-    const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
-    if (sessionUser && sessionUser.role === 'operator') {
-        const me = ops.find(o => String(o.mobile) === String(sessionUser.id));
-        if (me && me.blacklisted) {
-            sessionStorage.removeItem('cyberCafeAuth');
-            alert("Your account is blocked by Admin.");
-            window.location.href = 'login.html';
+    // 4. Handle Blacklist check (Only if operator list changed)
+    if (!changedKey || changedKey === 'cyberCafeOperators') {
+        const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
+        if (sessionUser && sessionUser.role === 'operator') {
+            const me = ops.find(o => String(o.mobile) === String(sessionUser.id));
+            if (me && me.blacklisted) {
+                sessionStorage.removeItem('cyberCafeAuth');
+                alert("Your account is blocked by Admin.");
+                window.location.href = 'login.html';
+            }
         }
     }
 });
@@ -1850,3 +1863,45 @@ if (closeMembershipBtn) {
 if (sessionUser && sessionUser.role === 'operator') {
     renderMembershipHistory();
 }
+
+// --- MOBILE RESPONSIVE SIDEBAR TOGGLE ---
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+    const mobileSidebarClose = document.getElementById('mobileSidebarClose');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const sidebar = document.querySelector('.sidebar');
+    const categoryList = document.getElementById('categoryList');
+
+    if (mobileSidebarToggle && sidebar && sidebarBackdrop) {
+        mobileSidebarToggle.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            sidebarBackdrop.classList.add('active');
+        });
+    }
+
+    const closeSidebar = () => {
+        if (sidebar && sidebarBackdrop) {
+            sidebar.classList.remove('active');
+            sidebarBackdrop.classList.remove('active');
+        }
+    };
+
+    if (mobileSidebarClose) {
+        mobileSidebarClose.addEventListener('click', closeSidebar);
+    }
+
+    if (sidebarBackdrop) {
+        sidebarBackdrop.addEventListener('click', closeSidebar);
+    }
+
+    // Close sidebar when clicking a navigation link or category on mobile
+    if (categoryList) {
+        categoryList.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1024) {
+                if (e.target.tagName === 'LI' || e.target.closest('li')) {
+                    setTimeout(closeSidebar, 200);
+                }
+            }
+        });
+    }
+});
