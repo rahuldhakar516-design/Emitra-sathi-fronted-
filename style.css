@@ -595,7 +595,8 @@ body {
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
         padding: 2.5rem 1.5rem;
-        background: #090e1a; /* solid dark fallback + glass */
+        background: #0b0f19 !important; /* solid deep dark background */
+        border-right: 1px solid var(--glass-border) !important;
     }
     
     .sidebar.active {
