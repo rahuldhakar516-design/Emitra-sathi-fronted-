@@ -508,6 +508,27 @@ document.addEventListener('DOMContentLoaded', () => {
         let hasResults = false;
         const fragment = document.createDocumentFragment();
         
+        // OPTIMIZATION: Extract heavy JSON parsing and localStorage reads OUTSIDE the O(N) loop!
+        let savedHighlight = null;
+        if (sessionUser && sessionUser.role === 'operator') {
+            try {
+                const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
+                const me = ops.find(o => String(o.mobile) === String(sessionUser.id));
+                if (me && me.highlightConfig) {
+                    savedHighlight = me.highlightConfig;
+                }
+            } catch (e) {
+                console.error("Error reading operator highlights:", e);
+            }
+        }
+        if (!savedHighlight) {
+            try {
+                savedHighlight = JSON.parse(localStorage.getItem('cyberHighlightConfig'));
+            } catch (e) {
+                console.error("Error reading global highlights:", e);
+            }
+        }
+        
         services.forEach(service => {
             const matchesFilter = currentFilter === 'all' || service.category === currentFilter;
             const matchesSearch = service.title.toLowerCase().includes(filterText.toLowerCase()) || 
@@ -521,18 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.target = '_blank';
                 card.className = `service-card card-${service.category}`;
                 
-                // Highlight dynamic card on home screen grid if config matches
-                let savedHighlight = null;
-                if (sessionUser && sessionUser.role === 'operator') {
-                    const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
-                    const me = ops.find(o => String(o.mobile) === String(sessionUser.id));
-                    if (me && me.highlightConfig) {
-                        savedHighlight = me.highlightConfig;
-                    }
-                }
-                if (!savedHighlight) {
-                    savedHighlight = JSON.parse(localStorage.getItem('cyberHighlightConfig'));
-                }
+                // Highlight configuration is already retrieved outside the loop!
                 const isHighlighted = savedHighlight && (savedHighlight.title === service.title);
                 
                 let titleHtml = service.title;

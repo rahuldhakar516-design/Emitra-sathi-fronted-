@@ -43,6 +43,8 @@ body {
     border-radius: 50%;
     opacity: 0.6;
     animation: float 20s infinite alternate;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
 }
 
 .blob-1 {
@@ -81,8 +83,6 @@ body {
     display: flex;
     height: 100vh;
     overflow: hidden;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
 }
 
 /* Sidebar */
