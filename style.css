@@ -1395,3 +1395,67 @@ body.light-theme #membershipHistoryBtn,
 body.light-theme #activityLogBtn {
     border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
+
+/* Center and compact the Operator Registration Modal perfectly on screen without page scroll */
+#registerWrapper {
+    max-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#registerWrapper .auth-card {
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    padding: 30px !important;
+    overflow: hidden;
+}
+
+#registerWrapper .auth-logo {
+    margin-bottom: 12px;
+}
+
+#registerWrapper .auth-card h2 {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+}
+
+#registerWrapper .auth-card p {
+    margin-bottom: 15px;
+}
+
+#registerForm {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 10px;
+    margin-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) rgba(0, 0, 0, 0.2);
+}
+
+/* Custom sleek scrollbar for registration form */
+#registerForm::-webkit-scrollbar {
+    width: 6px;
+}
+
+#registerForm::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+#registerForm::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+#registerForm::-webkit-scrollbar-thumb:hover {
+    background: #00bfff;
+}
+
+#registerWrapper #backToLoginFromReg {
+    margin-top: 10px;
+    font-weight: 500;
+}
+
