@@ -772,7 +772,6 @@ body {
         width: 95%;
         border-radius: 16px;
     }
-}
     
     .profile-info {
         word-break: break-word;
@@ -1166,4 +1165,231 @@ body {
     100% {
         transform: translate3d(-10%, 0, 0);
     }
+}
+
+/* ==========================================================================
+   LIGHT MODE DESIGN OVERRIDES
+   ========================================================================== */
+
+/* Triggers when html[data-initial-theme="light"] body OR body.light-theme is active */
+html[data-initial-theme="light"] body,
+body.light-theme {
+    --bg-color: #f3f4f6 !important;
+    --glass-bg: rgba(255, 255, 255, 0.8) !important;
+    --glass-border: rgba(0, 0, 0, 0.08) !important;
+    --text-main: #1f2937 !important;
+    --text-muted: #4b5563 !important;
+    --card-hover: rgba(255, 255, 255, 0.95) !important;
+}
+
+body.light-theme {
+    background-color: #f3f4f6 !important;
+    color: #1f2937 !important;
+}
+
+/* Background animated blobs in Light Mode */
+body.light-theme .blob-1 { background: rgba(0, 240, 255, 0.15) !important; }
+body.light-theme .blob-2 { background: rgba(0, 255, 136, 0.1) !important; }
+body.light-theme .blob-3 { background: rgba(255, 0, 122, 0.1) !important; }
+
+/* Sidebar in Light Mode */
+body.light-theme .sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-theme .logo {
+    color: #1f2937 !important;
+}
+
+body.light-theme .subtitle {
+    color: #4b5563 !important;
+}
+
+body.light-theme .categories h3 {
+    color: #6b7280 !important;
+}
+
+body.light-theme .categories li {
+    color: #4b5563 !important;
+}
+
+body.light-theme .categories li:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    color: #1f2937 !important;
+}
+
+body.light-theme .categories li.active {
+    background: var(--primary-gradient) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(0, 90, 255, 0.2) !important;
+}
+
+body.light-theme .sidebar-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #6b7280 !important;
+}
+
+/* Inputs & Form Fields in Light Mode */
+body.light-theme input,
+body.light-theme select,
+body.light-theme textarea {
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-theme input::placeholder,
+body.light-theme textarea::placeholder {
+    color: #9ca3af !important;
+}
+
+body.light-theme input:focus,
+body.light-theme select:focus,
+body.light-theme textarea:focus {
+    border-color: var(--primary-color) !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+body.light-theme .search-box input {
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+body.light-theme .search-box i {
+    color: #6b7280 !important;
+}
+
+/* Main Content Area in Light Mode */
+body.light-theme .welcome-text h1 {
+    background: linear-gradient(to right, #111827, #4b5563) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+body.light-theme .welcome-text p {
+    color: #4b5563 !important;
+}
+
+/* Time & Profile Widgets in Light Mode */
+body.light-theme .time-widget {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-theme .time-widget .date-part {
+    color: #6b7280 !important;
+}
+
+body.light-theme .user-profile {
+    background: linear-gradient(145deg, #ffffff, rgba(0, 240, 255, 0.03)) !important;
+    border: 1px solid rgba(0, 240, 255, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(0, 240, 255, 0.08) !important;
+}
+
+body.light-theme .profile-info h4 {
+    color: #111827 !important;
+    text-shadow: none !important;
+}
+
+body.light-theme .profile-info p {
+    color: #4b5563 !important;
+}
+
+/* Service Cards in Light Mode */
+body.light-theme .service-card {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.light-theme .service-card:hover {
+    background: #ffffff !important;
+    border-color: rgba(0, 240, 255, 0.3) !important;
+    box-shadow: 0 10px 25px rgba(0, 240, 255, 0.08) !important;
+}
+
+body.light-theme .card-icon {
+    background: #f3f4f6 !important;
+    color: var(--primary-color) !important;
+}
+
+body.light-theme .service-card:hover .card-icon {
+    background: var(--primary-gradient) !important;
+    color: #ffffff !important;
+}
+
+/* Modals & Dialogs in Light Mode */
+body.light-theme .modal-content {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #1f2937 !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-theme .modal-overlay {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+body.light-theme .close-modal {
+    color: #6b7280 !important;
+}
+
+body.light-theme .close-modal:hover {
+    color: #ff007a !important;
+}
+
+body.light-theme .payment-form {
+    background: #f9fafb !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .ledger-table th {
+    color: #4b5563 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .ledger-table td {
+    color: #1f2937 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-theme .ledger-table tr:hover td {
+    background: #f9fafb !important;
+}
+
+body.light-theme .summary-box {
+    background: #f9fafb !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .summary-box span {
+    color: #1f2937 !important;
+}
+
+body.light-theme .summary-box.profit span {
+    color: #00ff88 !important;
+}
+
+body.light-theme .summary-box.deductions span {
+    color: #ff007a !important;
+}
+
+body.light-theme #themePickerBtn span {
+    color: #1f2937 !important;
+}
+
+body.light-theme #themePickerBtn {
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme #supportBtn,
+body.light-theme #paymentLedgerBtn,
+body.light-theme #membershipHistoryBtn,
+body.light-theme #activityLogBtn {
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
