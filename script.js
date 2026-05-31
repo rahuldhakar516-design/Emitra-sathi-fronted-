@@ -1613,49 +1613,67 @@ STRICT OPERATOR GUIDELINES:
     };
 });
 
-document.addEventListener('firebaseSynced', (e) => {
-    // When Firebase syncs data to localStorage, selectively refresh only related UI parts
-    const changedKey = e.detail ? e.detail.key : null;
-    
-    // 1. Refresh Services & Categories (Only if specifically changed)
-    if (!changedKey || ['cyberCafeServices', 'cyberCafeCategories', 'cyberHighlightConfig'].includes(changedKey)) {
-        services = JSON.parse(localStorage.getItem('cyberCafeServices')) || [];
-        cyberCategories = JSON.parse(localStorage.getItem('cyberCafeCategories')) || cyberCategories;
-        updateCategoryNames();
+// BATCHED & DEBOUNCED SYNC HANDLER: Prevents multiple UI layout recalculations on rapid Firebase updates
+let pendingSyncedKeys = new Set();
+let firebaseSyncTimeout = null;
 
-        if (typeof renderDynamicCategories === 'function') {
-            renderDynamicCategories();
-        } else if (typeof renderCards === 'function') {
-            renderCards();
-        }
+document.addEventListener('firebaseSynced', (e) => {
+    const changedKey = e.detail ? e.detail.key : null;
+    if (changedKey) {
+        pendingSyncedKeys.add(changedKey);
     }
     
-    // 2. Refresh Profile (Only if specifically changed)
-    if (!changedKey || changedKey === 'cyberCafeProfile') {
-        if (typeof renderProfile === 'function') {
-            renderProfile();
-        }
-    }
-    
-    // 3. Refresh Theme, Marquee Notes, and Popups (Only if related configs changed)
-    if (!changedKey || ['cyberThemeColor', 'cyberNotesConfig', 'cyberPopupConfig', 'cyberCafeAlert'].includes(changedKey)) {
-        if (typeof window.applyAdvancedConfigs === 'function') {
-            window.applyAdvancedConfigs();
-        }
-    }
-    
-    // 4. Handle Blacklist check (Only if operator list changed)
-    if (!changedKey || changedKey === 'cyberCafeOperators') {
-        const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
-        if (sessionUser && sessionUser.role === 'operator') {
-            const me = ops.find(o => String(o.mobile) === String(sessionUser.id));
-            if (me && me.blacklisted) {
-                sessionStorage.removeItem('cyberCafeAuth');
-                alert("Your account is blocked by Admin.");
-                window.location.href = 'login.html';
+    clearTimeout(firebaseSyncTimeout);
+    firebaseSyncTimeout = setTimeout(() => {
+        const keys = Array.from(pendingSyncedKeys);
+        pendingSyncedKeys.clear();
+        const hasKey = keys.length > 0;
+        
+        // 1. Refresh Services & Categories (Only if specifically changed)
+        const needsServices = !hasKey || keys.some(k => ['cyberCafeServices', 'cyberCafeCategories', 'cyberHighlightConfig'].includes(k));
+        if (needsServices) {
+            services = JSON.parse(localStorage.getItem('cyberCafeServices')) || [];
+            cyberCategories = JSON.parse(localStorage.getItem('cyberCafeCategories')) || cyberCategories;
+            updateCategoryNames();
+
+            if (typeof renderDynamicCategories === 'function') {
+                renderDynamicCategories();
+            }
+            if (typeof renderCards === 'function') {
+                renderCards();
             }
         }
-    }
+        
+        // 2. Refresh Profile (Only if specifically changed)
+        const needsProfile = !hasKey || keys.includes('cyberCafeProfile');
+        if (needsProfile) {
+            if (typeof renderProfile === 'function') {
+                renderProfile();
+            }
+        }
+        
+        // 3. Refresh Theme, Marquee Notes, and Popups (Only if related configs changed)
+        const needsAdvanced = !hasKey || keys.some(k => ['cyberThemeColor', 'cyberNotesConfig', 'cyberPopupConfig', 'cyberCafeAlert'].includes(k));
+        if (needsAdvanced) {
+            if (typeof window.applyAdvancedConfigs === 'function') {
+                window.applyAdvancedConfigs();
+            }
+        }
+        
+        // 4. Handle Blacklist check (Only if operator list changed)
+        const needsBlacklist = !hasKey || keys.includes('cyberCafeOperators');
+        if (needsBlacklist) {
+            const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
+            if (sessionUser && sessionUser.role === 'operator') {
+                const me = ops.find(o => String(o.mobile) === String(sessionUser.id));
+                if (me && me.blacklisted) {
+                    sessionStorage.removeItem('cyberCafeAuth');
+                    alert("Your account is blocked by Admin.");
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+    }, 50); // 50ms batching window
 });
 
 // Payment Gateway Flow Logic
