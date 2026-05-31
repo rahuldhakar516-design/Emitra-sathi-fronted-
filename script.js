@@ -1904,4 +1904,80 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- LIGHT/DARK THEME MODE TOGGLE ---
+    const headerThemeBadge = document.getElementById('headerThemeBadge');
+    if (headerThemeBadge) {
+        // Adjust badge styles to feel interactive and clickable
+        headerThemeBadge.style.cursor = 'pointer';
+        headerThemeBadge.style.userSelect = 'none';
+        headerThemeBadge.style.transition = 'transform 0.2s, box-shadow 0.2s';
+        
+        // Hover effects
+        headerThemeBadge.addEventListener('mouseenter', () => {
+            headerThemeBadge.style.transform = 'scale(1.05)';
+            const isLight = localStorage.getItem('cyberThemeMode') === 'light';
+            headerThemeBadge.style.boxShadow = isLight 
+                ? '0 4px 15px rgba(0, 0, 0, 0.15), 0 0 10px rgba(0,0,0,0.05)'
+                : '0 4px 15px rgba(0, 240, 255, 0.4)';
+        });
+        headerThemeBadge.addEventListener('mouseleave', () => {
+            headerThemeBadge.style.transform = 'scale(1)';
+            headerThemeBadge.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+        });
+
+        // Function to update the icon and theme class
+        const updateThemeModeUI = (mode) => {
+            const iconEl = headerThemeBadge.querySelector('i');
+            if (mode === 'light') {
+                document.body.classList.add('light-theme');
+                document.documentElement.setAttribute('data-initial-theme', 'light');
+                if (iconEl) {
+                    iconEl.className = 'fa-solid fa-sun';
+                    iconEl.style.color = '#ffd700'; // Gold Sun
+                    iconEl.style.filter = 'drop-shadow(0 0 5px #ffd700)';
+                }
+            } else {
+                document.body.classList.remove('light-theme');
+                document.documentElement.removeAttribute('data-initial-theme');
+                if (iconEl) {
+                    iconEl.className = 'fa-solid fa-moon';
+                    iconEl.style.color = '#ffdd57'; // Moon color
+                    iconEl.style.filter = 'drop-shadow(0 0 5px #ffdd57)';
+                }
+            }
+        };
+
+        // Initial setup on load
+        const savedMode = localStorage.getItem('cyberThemeMode') || 'dark';
+        updateThemeModeUI(savedMode);
+
+        // Click event listener
+        headerThemeBadge.addEventListener('click', () => {
+            const currentMode = localStorage.getItem('cyberThemeMode') || 'dark';
+            const newMode = currentMode === 'light' ? 'dark' : 'light';
+            localStorage.setItem('cyberThemeMode', newMode);
+            updateThemeModeUI(newMode);
+
+            // Sync with other tabs in real-time
+            try {
+                const channel = new BroadcastChannel('cyberSyncThemeMode');
+                channel.postMessage({ type: 'UPDATE_THEME_MODE', data: newMode });
+            } catch (err) {}
+
+            if (typeof showToast === 'function') {
+                showToast(`Switched to ${newMode === 'light' ? 'Light' : 'Dark'} Mode!`, "success");
+            }
+        });
+
+        // Broadcast listener for multi-tab sync
+        try {
+            const channel = new BroadcastChannel('cyberSyncThemeMode');
+            channel.onmessage = (event) => {
+                if (event.data && event.data.type === 'UPDATE_THEME_MODE') {
+                    updateThemeModeUI(event.data.data);
+                }
+            };
+        } catch(err) {}
+    }
 });

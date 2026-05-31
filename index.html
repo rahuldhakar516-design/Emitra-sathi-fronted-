@@ -12,6 +12,10 @@
         if (savedTheme) {
             document.documentElement.style.setProperty('--primary-color', savedTheme);
         }
+        // Apply light/dark mode immediately on load to prevent flash of dark theme
+        if (localStorage.getItem('cyberThemeMode') === 'light') {
+            document.documentElement.setAttribute('data-initial-theme', 'light');
+        }
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -121,11 +125,11 @@
         <main class="main-content">
             <header class="top-header">
                 <div class="welcome-text">
-                    <h1>Welcome back, Operator</h1>
+                    <h1>Welcome back, Rahul</h1>
                     <p>Access all essential government and business portals instantly.</p>
                 </div>
                 <div class="header-actions">
-                    <span id="headerThemeBadge" style="font-size: 0.85rem; background: var(--primary-gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-palette"></i> Theme: <span id="headerThemeName">Cyan</span></span>
+                    <span id="headerThemeBadge" style="font-size: 0.85rem; background: var(--primary-gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; user-select: none; transition: all 0.2s;"><i class="fa-solid fa-moon"></i> Theme: <span id="headerThemeName">Cyan</span></span>
                     <div class="time-widget" id="timeWidget">00:00:00</div>
                     <div class="user-profile">
                         <img src="profile.jpg.jpg" alt="Rahul Singh Dhakad" class="profile-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
