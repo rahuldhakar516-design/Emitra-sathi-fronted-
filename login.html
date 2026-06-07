@@ -109,46 +109,51 @@
 
     <!-- REGISTRATION MODAL -->
     <div class="auth-wrapper hidden" id="registerWrapper" style="max-width: 650px;">
-        <div class="auth-card" style="padding: 20px 25px;">
-            <div class="auth-logo" style="margin-bottom: 8px;">
-                <i class="fa-solid fa-address-card" style="font-size: 2rem; color: #00f0ff;"></i>
+        <div class="auth-card" style="padding: 30px;">
+            <div class="auth-logo">
+                <i class="fa-solid fa-address-card" style="font-size: 3rem; color: #00f0ff;"></i>
             </div>
-            <h2 style="font-size: 1.5rem; margin-bottom: 2px;">Operator Registration</h2>
-            <p style="margin-bottom: 12px; font-size: 0.9rem;">Join the portal to manage your daily tasks.</p>
+            <h2>Operator Registration</h2>
+            <p style="margin-bottom: 20px;">Join the portal to manage your daily tasks.</p>
 
-            <form id="registerForm" class="auth-form auth-grid" style="gap: 8px;">
+            <form id="registerForm" class="auth-form auth-grid">
+                <!-- Left Col -->
+                <div style="grid-column: span 2;">
+                    <label style="color:#00f0ff; font-size:0.85rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Personal Details</label>
+                </div>
                 <div class="input-group">
                     <i class="fa-solid fa-user"></i>
-                    <input type="text" id="regName" placeholder="Full Name *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required>
+                    <input type="text" id="regName" placeholder="Full Name *" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-at"></i>
-                    <input type="text" id="regUsername" placeholder="Choose Username *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required>
+                    <input type="text" id="regUsername" placeholder="Choose Username *" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-phone"></i>
-                    <input type="text" id="regMobile" placeholder="Mobile Number *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required>
+                    <input type="text" id="regMobile" placeholder="Mobile Number *" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-id-card"></i>
-                    <input type="text" id="regAadhar" placeholder="Aadhar Number *" maxlength="12" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required autocomplete="off">
+                    <input type="text" id="regAadhar" placeholder="Aadhar Number *" maxlength="12" required autocomplete="off">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="grid-column: span 2;">
                     <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="regEmail" placeholder="Gmail Address *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required>
+                    <input type="email" id="regEmail" placeholder="Gmail Address *" required>
+                </div>
+
+                <!-- Pass && Security -->
+                <div style="grid-column: span 2; margin-top: 10px;">
+                    <label style="color:#ff007a; font-size:0.85rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Security Details</label>
                 </div>
                 <div class="input-group">
-                    <i class="fa-solid fa-store"></i>
-                    <input type="text" id="regShopName" placeholder="Shop / Business Name *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required>
-                </div>
-                <div class="input-group" style="position: relative;">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="regPassword" placeholder="Create Password *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required>
-                    <i class="fa-solid fa-eye toggle-pwd" id="toggleRegPwd" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); z-index: 5; font-size: 0.9rem;"></i>
+                    <input type="password" id="regPassword" placeholder="Create Password *" required>
+                    <i class="fa-solid fa-eye toggle-pwd" id="toggleRegPwd" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); z-index: 5;"></i>
                 </div>
                 <div class="input-group">
-                    <i class="fa-solid fa-circle-question" style="z-index: 2; font-size: 0.9rem;"></i>
-                    <select id="regSecurityQ" style="position:relative; width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); padding: 10px 10px 10px 40px; border-radius: 12px; color: #fff; outline: none; appearance: none; cursor:pointer; font-size: 0.9rem;" required>
+                    <i class="fa-solid fa-circle-question" style="z-index: 2;"></i>
+                    <select id="regSecurityQ" style="position:relative; width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); padding: 15px 15px 15px 45px; border-radius: 12px; color: #fff; outline: none; appearance: none; cursor:pointer;" required>
                         <option value="" disabled selected>Security Question...</option>
                         <option value="pet" style="color: #000;">What is your first pet's name?</option>
                         <option value="school" style="color: #000;">What is your first school's name?</option>
@@ -157,28 +162,34 @@
                 </div>
                 <div class="input-group" style="grid-column: span 2;">
                     <i class="fa-solid fa-key"></i>
-                    <input type="text" id="regSecurityA" placeholder="Security Answer (Keep secret) *" style="padding: 10px 10px 10px 40px; font-size: 0.9rem;" required autocomplete="off">
+                    <input type="text" id="regSecurityA" placeholder="Security Answer (Keep secret) *" required autocomplete="off">
                 </div>
 
-                <!-- Photos Group Inline -->
-                <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
-                    <span style="color:#aaa; font-size:0.75rem; white-space: nowrap; width: 85px;">Photo *:</span>
-                    <input type="file" id="regProfilePic" accept="image/*" style="padding: 5px; font-size: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; width: 100%;" required>
+                <!-- Shop && Photos -->
+                <div style="grid-column: span 2; margin-top: 10px;">
+                    <label style="color:#00ff88; font-size:0.85rem; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Shop & Identification</label>
                 </div>
-                <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
-                    <span style="color:#aaa; font-size:0.75rem; white-space: nowrap; width: 85px;">Shop Photo *:</span>
-                    <input type="file" id="regShopPic" accept="image/*" style="padding: 5px; font-size: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; width: 100%;" required>
+                <div class="input-group" style="grid-column: span 2;">
+                    <i class="fa-solid fa-store"></i>
+                    <input type="text" id="regShopName" placeholder="Shop / Business Name *" required>
+                </div>
+                <div class="input-group">
+                    <label style="color:#aaa; font-size:0.8rem; display:block; margin-bottom:5px;">Operator Photo *</label>
+                    <input type="file" id="regProfilePic" accept="image/*" style="padding:10px; padding-left:10px;" required>
+                </div>
+                <div class="input-group">
+                    <label style="color:#aaa; font-size:0.8rem; display:block; margin-bottom:5px;">Shop Photo *</label>
+                    <input type="file" id="regShopPic" accept="image/*" style="padding:10px; padding-left:10px;" required>
                 </div>
 
-                <div class="error-msg" id="regError" style="grid-column: span 2; text-align:center; min-height: 15px; font-size: 0.8rem; margin: 0;"></div>
+                <div class="error-msg" id="regError" style="grid-column: span 2; text-align:center;"></div>
                 
-                <button type="submit" class="auth-btn" id="regSubmitBtn" style="grid-column: span 2; background: linear-gradient(135deg, #00f0ff 0%, #007aff 100%); padding: 12px; font-size: 1rem; margin-top: 0;">Complete Registration</button>
+                <button type="submit" class="auth-btn" id="regSubmitBtn" style="grid-column: span 2; background: linear-gradient(135deg, #00f0ff 0%, #007aff 100%);">Complete Registration</button>
             </form>
             
-            <a href="#" class="forgot-link" id="backToLoginFromReg" style="color: #fff; margin-top: 10px; font-size: 0.85rem;">Already have an account? Login</a>
+            <a href="#" class="forgot-link" id="backToLoginFromReg" style="color: #fff;">Already have an account? Login</a>
         </div>
     </div>
-
 
     <!-- SET LOGIN PIN MODAL (Registration Step 2) -->
     <div class="auth-wrapper hidden" id="setPinWrapper">
@@ -705,7 +716,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="firebase_config.js?v=1.1"></script>
-    <script src="firebase_sync.js?v=1.1"></script>
+    <script src="firebase_config.js?v=1.2"></script>
+    <script src="firebase_sync.js?v=1.2"></script>
 </body>
 </html>

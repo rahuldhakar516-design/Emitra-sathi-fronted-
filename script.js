@@ -87,16 +87,41 @@ const defaultServices = [
 ];
 
 // --- INITIALIZE LOCAL STORAGE DATA ---
+// Helper: Load services, merge new ones from codebase (defaultServices), and sync back
+function loadServices() {
+    let activeServices = null;
+    try {
+        activeServices = JSON.parse(localStorage.getItem('cyberCafeServices'));
+    } catch (e) {
+        console.error("Error parsing cyberCafeServices:", e);
+    }
+    if (!activeServices || !Array.isArray(activeServices) || activeServices.length === 0) {
+        activeServices = [...defaultServices];
+        localStorage.setItem('cyberCafeServices', JSON.stringify(activeServices));
+    } else {
+        // Merge missing defaultServices (based on title)
+        let updated = false;
+        defaultServices.forEach(defSvc => {
+            const exists = activeServices.some(s => s.title === defSvc.title);
+            if (!exists) {
+                activeServices.push(defSvc);
+                updated = true;
+            }
+        });
+        if (updated) {
+            localStorage.setItem('cyberCafeServices', JSON.stringify(activeServices));
+        }
+    }
+    return activeServices;
+}
+
 if (!localStorage.getItem('cyberCafeServicesInit')) {
     localStorage.setItem('cyberCafeServices', JSON.stringify(defaultServices));
     localStorage.setItem('cyberCafeServicesInit', 'true');
 }
 
 // Global active services array
-let services = JSON.parse(localStorage.getItem('cyberCafeServices'));
-if (!services || services.length === 0) {
-    services = defaultServices;
-}
+let services = loadServices();
 
 // Default Profile Information
 const defaultProfile = {
@@ -379,19 +404,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     applyAdvancedConfigs();
 
-    // Apply Operator Service Permissions
-    if(sessionUser.role === 'operator') {
-        const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
-        const op = ops.find(o => String(o.mobile) === String(sessionUser.id));
-        
-        if (sessionUser.paymentStatus === 'paid') {
-            if(op && Array.isArray(op.allowedServices) && op.allowedServices.length > 0) {
-                services = services.filter(s => op.allowedServices.includes(s.title));
-            } else if(op && Array.isArray(op.allowedServices) && op.allowedServices.length === 0) {
-                services = []; // Blocked from all services if approved but none assigned
+    // Helper: Apply Operator Service Permissions
+    window.applyOperatorPermissions = function() {
+        if(sessionUser.role === 'operator') {
+            const ops = Object.values(JSON.parse(localStorage.getItem('cyberCafeOperators')) || []).filter(Boolean);
+            const op = ops.find(o => String(o.mobile) === String(sessionUser.id));
+            
+            if (sessionUser.paymentStatus === 'paid') {
+                if(op && Array.isArray(op.allowedServices) && op.allowedServices.length > 0) {
+                    services = services.filter(s => op.allowedServices.includes(s.title));
+                } else if(op && Array.isArray(op.allowedServices) && op.allowedServices.length === 0) {
+                    services = []; // Blocked from all services if approved but none assigned
+                }
             }
         }
-    }
+    };
+
+    applyOperatorPermissions();
     
     // Render Profile Data dynamically based on Role
     window.renderProfile = function() {
@@ -1204,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Retrieve portal info, services, and categories to construct system prompt dynamically
             const profile = JSON.parse(localStorage.getItem('cyberCafeProfile')) || {};
-            const services = JSON.parse(localStorage.getItem('cyberCafeServices')) || [];
+            const services = loadServices();
             const categories = JSON.parse(localStorage.getItem('cyberCafeCategories')) || [];
             
             // Build system prompt restricting AI to support ONLY eMitra Sathi
@@ -1632,7 +1661,10 @@ document.addEventListener('firebaseSynced', (e) => {
         // 1. Refresh Services & Categories (Only if specifically changed)
         const needsServices = !hasKey || keys.some(k => ['cyberCafeServices', 'cyberCafeCategories', 'cyberHighlightConfig'].includes(k));
         if (needsServices) {
-            services = JSON.parse(localStorage.getItem('cyberCafeServices')) || [];
+            services = loadServices();
+            if (typeof window.applyOperatorPermissions === 'function') {
+                window.applyOperatorPermissions();
+            }
             cyberCategories = JSON.parse(localStorage.getItem('cyberCafeCategories')) || cyberCategories;
             updateCategoryNames();
 

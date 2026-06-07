@@ -26,7 +26,7 @@ if (typeof db !== 'undefined' && db !== null) {
                     isSyncingFromFirebase = true;
                     try {
                         originalSetItem.call(localStorage, key, valStr);
-                        // Trigger an event for UI to update with specific key details
+                        // Trigger an event for UI to update
                         document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: key } }));
                     } catch (e) {
                         console.error(`Error updating local key ${key}:`, e);
@@ -66,12 +66,36 @@ const originalSetItem = localStorage.setItem;
 localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
     if (DB_KEYS.includes(key) && !isSyncingFromFirebase) {
-        if (typeof db !== 'undefined' && db !== null) {
+        const adminOnlyKeys = [
+            'cyberCafeServices', 'cyberCafeServicesInit', 'cyberCafeCategories', 
+            'cyberThemeColor', 'cyberPopupConfig', 'cyberCafeAlert', 'cyberNotesConfig', 
+            'cyberHighlightConfig', 'cyberOpenAiKey', 'cyberCafePwd'
+        ];
+        
+        let shouldSync = true;
+        if (adminOnlyKeys.includes(key)) {
+            let isAdmin = false;
+            try {
+                if (document.getElementById('backendApp') || document.title.toLowerCase().includes('backend')) {
+                    isAdmin = true;
+                } else {
+                    const auth = JSON.parse(sessionStorage.getItem('cyberCafeAuth'));
+                    if (auth && auth.role === 'admin') {
+                        isAdmin = true;
+                    }
+                }
+            } catch(e) {}
+            if (!isAdmin) {
+                shouldSync = false;
+            }
+        }
+
+        if (shouldSync && typeof db !== 'undefined' && db !== null) {
             let parsedVal = value;
             try { parsedVal = JSON.parse(value); } catch(e) {}
             db.ref(key).set(parsedVal).catch(err => console.error("Firebase Sync Error:", err));
         }
-        // Dispatch local event immediately to update UI in current tab with key detail
+        // Dispatch local event immediately to update UI in current tab
         document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: key } }));
     }
 };
@@ -81,10 +105,34 @@ const originalRemoveItem = localStorage.removeItem;
 localStorage.removeItem = function(key) {
     originalRemoveItem.apply(this, arguments);
     if (DB_KEYS.includes(key) && !isSyncingFromFirebase) {
-        if (typeof db !== 'undefined' && db !== null) {
+        const adminOnlyKeys = [
+            'cyberCafeServices', 'cyberCafeServicesInit', 'cyberCafeCategories', 
+            'cyberThemeColor', 'cyberPopupConfig', 'cyberCafeAlert', 'cyberNotesConfig', 
+            'cyberHighlightConfig', 'cyberOpenAiKey', 'cyberCafePwd'
+        ];
+        
+        let shouldSync = true;
+        if (adminOnlyKeys.includes(key)) {
+            let isAdmin = false;
+            try {
+                if (document.getElementById('backendApp') || document.title.toLowerCase().includes('backend')) {
+                    isAdmin = true;
+                } else {
+                    const auth = JSON.parse(sessionStorage.getItem('cyberCafeAuth'));
+                    if (auth && auth.role === 'admin') {
+                        isAdmin = true;
+                    }
+                }
+            } catch(e) {}
+            if (!isAdmin) {
+                shouldSync = false;
+            }
+        }
+
+        if (shouldSync && typeof db !== 'undefined' && db !== null) {
             db.ref(key).remove().catch(err => console.error("Firebase Sync Error:", err));
         }
-        // Dispatch local event immediately to update UI in current tab with key detail
+        // Dispatch local event immediately to update UI in current tab
         document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: key } }));
     }
 };
@@ -92,7 +140,7 @@ localStorage.removeItem = function(key) {
 // 5. Native cross-tab storage changes (Only dispatch UI event, never set to Firebase)
 window.addEventListener('storage', (e) => {
     if (DB_KEYS.includes(e.key) && e.newValue !== null && !isSyncingFromFirebase) {
-        // Dispatch local event immediately to update UI in current tab with key detail
+        // Dispatch local event immediately to update UI in current tab
         document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: e.key } }));
     }
 });
