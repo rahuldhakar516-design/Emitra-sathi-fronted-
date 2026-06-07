@@ -2041,3 +2041,810 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(err) {}
     }
 });
+
+// ==========================================
+// --- WORK DELEGATION & LIVE CHAT LOGIC ---
+// ==========================================
+
+// Global state variables
+let selectedTicketId = null;
+let currentRecordedBlob = null;
+let voiceMediaRecorder = null;
+let voiceAudioChunks = [];
+let voiceRecordingTimer = null;
+let voiceStartTime = null;
+const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB limit
+
+// 1. Modals Open/Close
+let selectedWorkFiles = [];
+
+function openSendWorkModal() {
+    document.getElementById('modalSendWork').classList.add('active');
+    // Clear form fields
+    document.getElementById('formSendWork').reset();
+    selectedWorkFiles = [];
+    renderSelectedFilesList();
+    deleteRecordedVoice();
+}
+
+function closeSendWorkModal() {
+    document.getElementById('modalSendWork').classList.remove('active');
+    stopVoiceRecordingIfActive();
+}
+
+function openWorkHistoryModal() {
+    document.getElementById('modalWorkHistory').classList.add('active');
+    initWorkRequestsFirebaseListener();
+}
+
+function closeWorkHistoryModal() {
+    document.getElementById('modalWorkHistory').classList.remove('active');
+    // Clear selected ticket & update badge
+    selectedTicketId = null;
+    updateOperatorUnreadBadge();
+}
+
+// 2. Multiple Media Upload Handling
+function handleMultipleFilesSelect(e) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.type.startsWith('image/')) {
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                showToast(`Image "${file.name}" is large. Compressing...`, "info");
+                compressImage(file, 2000, 2000, function(compressedBase64) {
+                    selectedWorkFiles.push({
+                        type: 'image',
+                        data: compressedBase64,
+                        name: file.name
+                    });
+                    renderSelectedFilesList();
+                });
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    selectedWorkFiles.push({
+                        type: 'image',
+                        data: evt.target.result,
+                        name: file.name
+                    });
+                    renderSelectedFilesList();
+                };
+                reader.readAsDataURL(file);
+            }
+        } else if (file.type === 'application/pdf') {
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                showToast(`PDF "${file.name}" exceeds 2MB limit.`, "error");
+                continue;
+            }
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                selectedWorkFiles.push({
+                    type: 'pdf',
+                    data: evt.target.result,
+                    name: file.name
+                });
+                renderSelectedFilesList();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            showToast(`Unsupported file type: ${file.name}`, "error");
+        }
+    }
+    
+    // Clear input value so same file can be selected again
+    e.target.value = "";
+}
+
+function renderSelectedFilesList() {
+    const container = document.getElementById('selectedFilesContainer');
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    if (selectedWorkFiles.length === 0) {
+        container.style.display = "none";
+        return;
+    }
+    
+    container.style.display = "flex";
+    
+    selectedWorkFiles.forEach((file, index) => {
+        const card = document.createElement('div');
+        card.style.width = "90px";
+        card.style.height = "120px";
+        card.style.border = "1px solid var(--glass-border)";
+        card.style.borderRadius = "8px";
+        card.style.padding = "6px";
+        card.style.background = "rgba(0,0,0,0.3)";
+        card.style.display = "flex";
+        card.style.flexDirection = "column";
+        card.style.alignItems = "center";
+        card.style.justifyContent = "space-between";
+        card.style.position = "relative";
+        card.style.textAlign = "center";
+        card.style.marginBottom = "5px";
+        
+        let previewHtml = "";
+        if (file.type === 'image') {
+            previewHtml = `<img src="${file.data}" style="width: 100%; height: 55px; object-fit: cover; border-radius: 4px;">`;
+        } else {
+            previewHtml = `<i class="fa-solid fa-file-pdf" style="font-size: 2rem; color: #ff3333; margin-top: 5px;"></i>`;
+        }
+        
+        card.innerHTML = `
+            ${previewHtml}
+            <span style="font-size: 0.65rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; display: block; margin-top: 4px;" title="${file.name}">${file.name}</span>
+            <button type="button" style="background: #ff007a; border: none; color:#fff; padding: 4px 6px; border-radius: 6px; font-size: 0.65rem; cursor: pointer; position: relative; z-index: 10; margin-top: 8px; width: 100%; text-align: center;" onclick="removeSelectedWorkFile(${index}, event)">Remove</button>
+        `;
+        container.appendChild(card);
+    });
+}
+
+window.removeSelectedWorkFile = function(index, e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    selectedWorkFiles.splice(index, 1);
+    renderSelectedFilesList();
+};
+
+// 3. Image Compression Helper (Canvas)
+function compressImage(file, maxW, maxH, callback) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxW) {
+                height = Math.round((height * maxW) / width);
+                width = maxW;
+            }
+            if (height > maxH) {
+                width = Math.round((width * maxH) / height);
+                height = maxH;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9); // 90% compression quality
+            callback(dataUrl);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// 4. Voice Note Recorder Logic
+function toggleVoiceRecording() {
+    const micIcon = document.getElementById('micBtnIcon');
+    const micBtn = document.getElementById('btnRecordVoice');
+    const statusText = document.getElementById('recordingStatus');
+
+    if (!voiceMediaRecorder || voiceMediaRecorder.state === 'inactive') {
+        // Request microphone permission and start recording
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                voiceAudioChunks = [];
+                voiceMediaRecorder = new MediaRecorder(stream);
+                
+                voiceMediaRecorder.ondataavailable = event => {
+                    voiceAudioChunks.push(event.data);
+                };
+
+                voiceMediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(voiceAudioChunks, { type: 'audio/wav' });
+                    
+                    // Enforce size limit on audio
+                    if (audioBlob.size > MAX_FILE_SIZE_BYTES) {
+                        showToast("Voice clip exceeds size limit.", "error");
+                        deleteRecordedVoice();
+                        return;
+                    }
+                    
+                    currentRecordedBlob = audioBlob;
+                    
+                    // Convert audio to base64
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        attachedAudioBase64 = reader.result;
+                        renderAudioPlayback();
+                    };
+                    reader.readAsDataURL(audioBlob);
+
+                    // Stop mic tracks to free resources
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                voiceMediaRecorder.start();
+                voiceStartTime = Date.now();
+                
+                // Update UI state
+                micBtn.classList.add('recording');
+                micIcon.className = 'fa-solid fa-stop';
+                micIcon.style.color = '#fff';
+                statusText.textContent = "Recording...";
+                
+                document.getElementById('recordingTimer').style.display = 'block';
+                document.getElementById('recordingWave').style.display = 'flex';
+                document.getElementById('audioPlaybackContainer').style.display = 'none';
+
+                // Timer ticker
+                clearInterval(voiceRecordingTimer);
+                voiceRecordingTimer = setInterval(() => {
+                    const elapsedSecs = Math.floor((Date.now() - voiceStartTime) / 1000);
+                    const minutesStr = String(Math.floor(elapsedSecs / 60)).padStart(2, '0');
+                    const secondsStr = String(elapsedSecs % 60).padStart(2, '0');
+                    document.getElementById('recordingTimer').textContent = `${minutesStr}:${secondsStr} / 01:00`;
+                    
+                    if (elapsedSecs >= 60) {
+                        // Max limit of 1 min reached, auto stop
+                        toggleVoiceRecording();
+                    }
+                }, 500);
+            })
+            .catch(err => {
+                console.error("Microphone access error:", err);
+                showToast("Microphone access denied or unsupported.", "error");
+            });
+    } else {
+        // Stop recording
+        stopVoiceRecordingIfActive();
+    }
+}
+
+function stopVoiceRecordingIfActive() {
+    const micIcon = document.getElementById('micBtnIcon');
+    const micBtn = document.getElementById('btnRecordVoice');
+    const statusText = document.getElementById('recordingStatus');
+
+    if (voiceMediaRecorder && voiceMediaRecorder.state !== 'inactive') {
+        voiceMediaRecorder.stop();
+    }
+    
+    clearInterval(voiceRecordingTimer);
+    if (micBtn) micBtn.classList.remove('recording');
+    if (micIcon) {
+        micIcon.className = 'fa-solid fa-microphone';
+        micIcon.style.color = '#00ff88';
+    }
+    if (statusText) statusText.textContent = "Click mic to record";
+    
+    const timer = document.getElementById('recordingTimer');
+    const wave = document.getElementById('recordingWave');
+    if (timer) timer.style.display = 'none';
+    if (wave) wave.style.display = 'none';
+}
+
+let attachedAudioBase64 = null;
+
+function renderAudioPlayback() {
+    const playbackContainer = document.getElementById('audioPlaybackContainer');
+    const player = document.getElementById('recordedAudioPlayer');
+    const statusText = document.getElementById('recordingStatus');
+    
+    if (playbackContainer && player && currentRecordedBlob) {
+        player.src = URL.createObjectURL(currentRecordedBlob);
+        playbackContainer.style.display = 'flex';
+        if (statusText) statusText.textContent = "Voice note recorded";
+    }
+}
+
+function deleteRecordedVoice() {
+    currentRecordedBlob = null;
+    attachedAudioBase64 = null;
+    
+    const playbackContainer = document.getElementById('audioPlaybackContainer');
+    const player = document.getElementById('recordedAudioPlayer');
+    const statusText = document.getElementById('recordingStatus');
+    
+    if (player) player.src = "";
+    if (playbackContainer) playbackContainer.style.display = 'none';
+    if (statusText) statusText.textContent = "Click mic to record";
+}
+
+// 5. Submit Work Request to Firebase
+function handleSendWorkSubmit(e) {
+    e.preventDefault();
+
+    const instructions = document.getElementById('sendWorkInstructions').value.trim();
+    if (!instructions) {
+        showToast("Please enter task instructions.", "error");
+        return;
+    }
+
+    // Compile all files including audio voice notes
+    let uploadFiles = [...selectedWorkFiles];
+    if (attachedAudioBase64) {
+        uploadFiles.push({
+            type: 'audio',
+            data: attachedAudioBase64,
+            name: 'voicenote.wav'
+        });
+    }
+
+    if (typeof db === 'undefined' || db === null) {
+        showToast("Firebase connection not available.", "error");
+        return;
+    }
+
+    const submitBtn = document.getElementById('btnSubmitWork');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `Submitting... <i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    const requestId = 'work_' + Date.now();
+    const primaryFile = uploadFiles.length > 0 ? uploadFiles[0] : null;
+    
+    const payload = {
+        id: requestId,
+        operatorId: sessionUser.id,
+        operatorName: sessionUser.name,
+        operatorPhone: sessionUser.id,
+        timestamp: Date.now(),
+        status: 'pending',
+        message: instructions,
+        // Legacy support
+        fileType: primaryFile ? primaryFile.type : 'none',
+        fileData: primaryFile ? primaryFile.data : null,
+        fileName: primaryFile ? primaryFile.name : null,
+        // Multiple files support
+        files: uploadFiles,
+        replies: [
+            {
+                sender: 'operator',
+                senderName: sessionUser.name,
+                text: "Work Ticket Created: " + instructions.substring(0, 40) + (instructions.length > 40 ? "..." : ""),
+                timestamp: Date.now()
+            }
+        ]
+    };
+
+    // Push to Firebase directly
+    db.ref('cyberCafeWorkRequests/' + requestId).set(payload)
+        .then(() => {
+            showToast("Successful send your work", "success");
+            closeSendWorkModal();
+            // Automatically open history & chat view
+            setTimeout(() => {
+                openWorkHistoryModal();
+                selectTicket(requestId);
+            }, 800);
+        })
+        .catch(err => {
+            console.error("Firebase submit error:", err);
+            showToast("Failed to submit request. Please try again.", "error");
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `Submit Work <i class="fa-solid fa-circle-check"></i>`;
+        });
+}
+
+// 6. Real-time Firebase Listener for Operator Work Requests
+let workRequestsList = [];
+
+function loadWorkRequestsFromCache() {
+    try {
+        if (sessionUser && sessionUser.id) {
+            const cachedRequests = localStorage.getItem('cyberCafeWorkRequests_' + sessionUser.id);
+            if (cachedRequests) {
+                workRequestsList = JSON.parse(cachedRequests);
+                workRequestsList.sort((a, b) => b.timestamp - a.timestamp);
+            }
+        }
+    } catch(e) {
+        console.error("Error loading cached work requests:", e);
+    }
+}
+
+let hasFirebaseListenerInitialized = false;
+
+function initWorkRequestsFirebaseListener() {
+    if (typeof db === 'undefined' || db === null || !sessionUser || !sessionUser.id) return;
+    
+    // Load cached tickets to display instantly
+    if (workRequestsList.length === 0) {
+        loadWorkRequestsFromCache();
+    }
+    
+    // Redraw lists from cache immediately
+    renderTicketList();
+    if (selectedTicketId) {
+        renderChatWindow(selectedTicketId);
+    }
+
+    if (hasFirebaseListenerInitialized) return;
+    hasFirebaseListenerInitialized = true;
+    
+    // Listen to changes on requests matching operatorId
+    db.ref('cyberCafeWorkRequests').orderByChild('operatorId').equalTo(sessionUser.id)
+        .on('value', (snapshot) => {
+            workRequestsList = [];
+            snapshot.forEach(child => {
+                workRequestsList.push(child.val());
+            });
+            
+            // Sort by newest timestamp first
+            workRequestsList.sort((a, b) => b.timestamp - a.timestamp);
+            
+            // Save to local cache permanently
+            try {
+                localStorage.setItem('cyberCafeWorkRequests_' + sessionUser.id, JSON.stringify(workRequestsList));
+            } catch(e) {
+                console.error("Error caching work requests:", e);
+            }
+            
+            renderTicketList();
+            
+            if (selectedTicketId) {
+                // Update selected ticket details
+                const updatedTicket = workRequestsList.find(t => t.id === selectedTicketId);
+                if (updatedTicket) {
+                    renderChatWindow(selectedTicketId);
+                }
+            }
+            
+            updateOperatorUnreadBadge();
+        });
+}
+
+// Helper to keep track of viewed messages to show unread badges
+function getLocalLastViewedTimes() {
+    try {
+        return JSON.parse(localStorage.getItem('cyberCafeLastViewedTickets') || '{}');
+    } catch(e) {
+        return {};
+    }
+}
+
+function saveLocalLastViewedTime(ticketId, time) {
+    const times = getLocalLastViewedTimes();
+    times[ticketId] = time;
+    localStorage.setItem('cyberCafeLastViewedTickets', JSON.stringify(times));
+    updateOperatorUnreadBadge();
+}
+
+function updateOperatorUnreadBadge() {
+    const viewTimes = getLocalLastViewedTimes();
+    let unreadCount = 0;
+    
+    workRequestsList.forEach(ticket => {
+        // Only count unread admin replies when not currently viewing that ticket
+        if (selectedTicketId && ticket.id === selectedTicketId) return;
+        
+        const lastViewed = viewTimes[ticket.id] || 0;
+        const adminReplies = (ticket.replies || []).filter(r => r.sender === 'admin');
+        
+        if (adminReplies.length > 0) {
+            const lastAdminReply = adminReplies[adminReplies.length - 1];
+            if (lastAdminReply.timestamp > lastViewed) {
+                unreadCount++;
+            }
+        }
+    });
+
+    const badge = document.getElementById('operatorWorkBadge');
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = unreadCount;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+// 7. Render ticket list in history modal
+let ticketSearchFilterText = "";
+
+function filterTicketList() {
+    ticketSearchFilterText = document.getElementById('ticketSearchInput').value.toLowerCase();
+    renderTicketList();
+}
+
+function renderTicketList() {
+    const listContainer = document.getElementById('ticketHistoryList');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = "";
+    
+    const filtered = workRequestsList.filter(t => {
+        const textMatch = t.message.toLowerCase().includes(ticketSearchFilterText) || 
+                          t.id.toLowerCase().includes(ticketSearchFilterText);
+        return textMatch;
+    });
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); padding: 40px 10px;">
+                <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                <p>No work tickets found</p>
+            </div>
+        `;
+        return;
+    }
+
+    const viewTimes = getLocalLastViewedTimes();
+
+    filtered.forEach(ticket => {
+        const item = document.createElement('div');
+        item.className = `ticket-list-item ${selectedTicketId === ticket.id ? 'active' : ''}`;
+        item.onclick = () => selectTicket(ticket.id);
+        
+        // Check if has unread admin replies
+        const lastViewed = viewTimes[ticket.id] || 0;
+        const adminReplies = (ticket.replies || []).filter(r => r.sender === 'admin');
+        const hasUnread = adminReplies.length > 0 && adminReplies[adminReplies.length - 1].timestamp > lastViewed;
+        
+        const dateStr = new Date(ticket.timestamp).toLocaleDateString('en-IN', {
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+        });
+
+        item.innerHTML = `
+            <div class="ticket-title-row">
+                <span style="font-weight: 700; color: #fff; font-size: 0.9rem;">#${ticket.id.slice(-8)}</span>
+                <span class="ticket-status-badge badge-${ticket.status}">${ticket.status}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${ticket.message}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size: 0.72rem; color: var(--text-muted);">${dateStr}</span>
+                ${hasUnread ? `<span style="width: 8px; height: 8px; background: #ff007a; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #ff007a;"></span>` : ''}
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
+
+// 8. Select and load ticket details + chat
+function selectTicket(ticketId) {
+    selectedTicketId = ticketId;
+    
+    // Hide placeholder
+    const placeholder = document.getElementById('chatPlaceholder');
+    if (placeholder) placeholder.style.display = 'none';
+
+    // Rerender list to reflect active ticket selection state
+    renderTicketList();
+    renderChatWindow(ticketId);
+    
+    // Save last read time
+    saveLocalLastViewedTime(ticketId, Date.now());
+}
+
+function renderChatWindow(ticketId) {
+    const ticket = workRequestsList.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    // Header
+    const dateStr = new Date(ticket.timestamp).toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    document.getElementById('chatTicketTitle').textContent = `Work Order #${ticket.id.slice(-8)}`;
+    document.getElementById('chatTicketTime').textContent = `Submitted: ${dateStr}`;
+    
+    const statusBadge = document.getElementById('chatTicketStatus');
+    statusBadge.className = `ticket-status-badge badge-${ticket.status}`;
+    statusBadge.textContent = ticket.status;
+
+    // Instructions message
+    document.getElementById('chatTicketMessage').textContent = ticket.message;
+
+    // Attachments
+    const attachContainer = document.getElementById('chatTicketAttachments');
+    attachContainer.innerHTML = "";
+    
+    if (ticket.files && Array.isArray(ticket.files) && ticket.files.length > 0) {
+        ticket.files.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.style.display = "flex";
+            fileItem.style.flexDirection = "column";
+            fileItem.style.gap = "6px";
+            fileItem.style.border = "1px solid var(--glass-border)";
+            fileItem.style.borderRadius = "8px";
+            fileItem.style.padding = "8px";
+            fileItem.style.background = "rgba(255,255,255,0.02)";
+            fileItem.style.width = "130px";
+            fileItem.style.alignItems = "center";
+            fileItem.style.textAlign = "center";
+
+            if (file.type === 'image') {
+                fileItem.innerHTML = `
+                    <a href="${file.data}" target="_blank">
+                        <img src="${file.data}" alt="${file.name}" style="width:110px; height:110px; object-fit:cover; border-radius:6px; border:1px solid var(--glass-border);">
+                    </a>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;" title="${file.name}">${file.name}</span>
+                    <a href="${file.data}" download="${file.name || 'image.jpg'}" class="btn" style="padding: 4px 6px; font-size: 0.7rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); color:#fff;">
+                        <i class="fa-solid fa-download"></i> Download
+                    </a>
+                `;
+            } else if (file.type === 'pdf') {
+                fileItem.innerHTML = `
+                    <i class="fa-solid fa-file-pdf" style="font-size: 2.2rem; color: #ff3333; margin-top: 10px; margin-bottom: 10px;"></i>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px; margin-bottom: 6px;" title="${file.name}">${file.name}</span>
+                    <a href="${file.data}" download="${file.name || 'document.pdf'}" class="chat-attachment-pdf" style="display:inline-flex; align-items:center; justify-content:center; gap:4px; background:rgba(255, 51, 51, 0.1); color:#ff3333; border:1px solid rgba(255, 51, 51, 0.3); padding:4px 6px; border-radius:4px; text-decoration:none; font-size:0.70rem; font-weight:600; width: 100%;">
+                        <i class="fa-solid fa-file-pdf"></i> Download
+                    </a>
+                `;
+            } else if (file.type === 'audio') {
+                fileItem.innerHTML = `
+                    <div class="ticket-audio-player" style="width:100%; justify-content:center;">
+                        <i class="fa-solid fa-microphone" style="color: #00ff88; font-size: 1.1rem;"></i>
+                        <audio src="${file.data}" controls style="max-width: 90px; height: 24px; outline:none; background:#000; border-radius:12px; overflow:hidden;"></audio>
+                    </div>
+                `;
+            }
+            attachContainer.appendChild(fileItem);
+        });
+    } else if (ticket.fileType && ticket.fileType !== 'none' && ticket.fileData) {
+        const fileItem = document.createElement('div');
+        fileItem.style.display = "flex";
+        fileItem.style.flexDirection = "column";
+        fileItem.style.gap = "6px";
+        fileItem.style.border = "1px solid var(--glass-border)";
+        fileItem.style.borderRadius = "8px";
+        fileItem.style.padding = "8px";
+        fileItem.style.background = "rgba(255,255,255,0.02)";
+        fileItem.style.width = "130px";
+        fileItem.style.alignItems = "center";
+        fileItem.style.textAlign = "center";
+
+        if (ticket.fileType === 'image') {
+            fileItem.innerHTML = `
+                <a href="${ticket.fileData}" target="_blank">
+                    <img src="${ticket.fileData}" alt="${ticket.fileName}" style="width:110px; height:110px; object-fit:cover; border-radius:6px; border:1px solid var(--glass-border);">
+                </a>
+                <span style="font-size: 0.72rem; color: var(--text-muted); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;" title="${ticket.fileName}">${ticket.fileName}</span>
+                <a href="${ticket.fileData}" download="${ticket.fileName || 'image.jpg'}" class="btn" style="padding: 4px 6px; font-size: 0.7rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 100%; background:rgba(255,255,255,0.1); border:1px solid var(--glass-border); color:#fff;">
+                    <i class="fa-solid fa-download"></i> Download
+                </a>
+            `;
+        } else if (ticket.fileType === 'pdf') {
+            fileItem.innerHTML = `
+                <i class="fa-solid fa-file-pdf" style="font-size: 2.2rem; color: #ff3333; margin-top: 10px; margin-bottom: 10px;"></i>
+                <span style="font-size: 0.72rem; color: var(--text-muted); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px; margin-bottom: 6px;" title="${ticket.fileName}">${ticket.fileName}</span>
+                <a href="${ticket.fileData}" download="${ticket.fileName || 'document.pdf'}" class="chat-attachment-pdf" style="display:inline-flex; align-items:center; justify-content:center; gap:4px; background:rgba(255, 51, 51, 0.1); color:#ff3333; border:1px solid rgba(255, 51, 51, 0.3); padding:4px 6px; border-radius:4px; text-decoration:none; font-size:0.70rem; font-weight:600; width: 100%;">
+                    <i class="fa-solid fa-file-pdf"></i> Download
+                </a>
+            `;
+        } else if (ticket.fileType === 'audio') {
+            fileItem.innerHTML = `
+                <div class="ticket-audio-player">
+                    <i class="fa-solid fa-microphone" style="color: #00ff88; font-size: 1.2rem;"></i>
+                    <audio src="${ticket.fileData}" controls style="max-width: 180px; height: 28px; outline:none; background:#000; border-radius:14px; overflow:hidden;"></audio>
+                </div>
+            `;
+        }
+        attachContainer.appendChild(fileItem);
+    } else {
+        attachContainer.innerHTML = `<span style="font-size: 0.8rem; color: var(--text-muted);">No attachments</span>`;
+    }
+
+    // Replies / Messages Bubbles
+    const messageContainer = document.getElementById('chatMessagesList');
+    messageContainer.innerHTML = "";
+
+    const replies = ticket.replies || [];
+    replies.forEach(reply => {
+        const bubble = document.createElement('div');
+        const isMe = reply.sender === 'operator';
+        bubble.className = `chat-message-bubble ${isMe ? 'message-operator' : 'message-admin'}`;
+        
+        const timeVal = reply.timestamp ? new Date(reply.timestamp).toLocaleTimeString('en-IN', {
+            hour: '2-digit', minute: '2-digit'
+        }) : '';
+
+        bubble.innerHTML = `
+            <span class="chat-msg-sender">${reply.senderName || (isMe ? 'Operator' : 'Admin')}</span>
+            <span style="white-space: pre-wrap;">${reply.text}</span>
+            <span class="chat-msg-time">${timeVal}</span>
+        `;
+        messageContainer.appendChild(bubble);
+    });
+
+    // Scroll chat window to bottom
+    const scrollContainer = document.getElementById('chatScrollContainer');
+    if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+}
+
+// 9. Send Chat message inside ticket replies
+function handleSendChatMessage(e) {
+    if (e) e.preventDefault();
+
+    if (!selectedTicketId) return;
+    const input = document.getElementById('chatInputMessage');
+    const msgText = input.value.trim();
+    if (!msgText) return;
+
+    const ticket = workRequestsList.find(t => t.id === selectedTicketId);
+    if (!ticket) return;
+
+    const replies = ticket.replies || [];
+    
+    // Create new reply payload
+    const newReply = {
+        sender: 'operator',
+        senderName: sessionUser.name,
+        text: msgText,
+        timestamp: Date.now()
+    };
+
+    replies.push(newReply);
+
+    // Save scroll state before adding
+    input.value = "";
+    
+    db.ref('cyberCafeWorkRequests/' + selectedTicketId + '/replies').set(replies)
+        .then(() => {
+            saveLocalLastViewedTime(selectedTicketId, Date.now());
+        })
+        .catch(err => {
+            console.error("Chat send error:", err);
+            showToast("Failed to send message.", "error");
+        });
+}
+
+function handleChatSubmitOnEnter(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendChatMessage();
+    }
+}
+
+// Auto init listener on load if user is logged in
+document.addEventListener('DOMContentLoaded', () => {
+    if (sessionUser && sessionUser.role === 'operator') {
+        setTimeout(initWorkRequestsFirebaseListener, 1500); // Wait for firebase to settle
+    }
+});
+
+// Global Toast Notification Helper
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    let icon = type === 'success' ? 'fa-check-circle' : (type === 'warning' ? 'fa-exclamation-circle' : (type === 'error' ? 'fa-times-circle' : 'fa-info-circle'));
+    
+    toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <div>
+            <div style="font-weight: 700; font-size: 1.05rem; color: #fff;">Notification</div>
+            <div style="font-size: 0.9rem; color: #ddd; margin-top:2px;">${message}</div>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.4;
+        audio.play();
+    } catch(e) {}
+    
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+window.showToast = showToast;
+
+
