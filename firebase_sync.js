@@ -26,8 +26,8 @@ if (typeof db !== 'undefined' && db !== null) {
                     isSyncingFromFirebase = true;
                     try {
                         originalSetItem.call(localStorage, key, valStr);
-                        // Trigger an event for UI to update
-                        document.dispatchEvent(new Event('firebaseSynced'));
+                        // Trigger an event for UI to update with specific key details
+                        document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: key } }));
                     } catch (e) {
                         console.error(`Error updating local key ${key}:`, e);
                     } finally {
@@ -71,8 +71,8 @@ localStorage.setItem = function(key, value) {
             try { parsedVal = JSON.parse(value); } catch(e) {}
             db.ref(key).set(parsedVal).catch(err => console.error("Firebase Sync Error:", err));
         }
-        // Dispatch local event immediately to update UI in current tab
-        document.dispatchEvent(new Event('firebaseSynced'));
+        // Dispatch local event immediately to update UI in current tab with key detail
+        document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: key } }));
     }
 };
 
@@ -84,16 +84,16 @@ localStorage.removeItem = function(key) {
         if (typeof db !== 'undefined' && db !== null) {
             db.ref(key).remove().catch(err => console.error("Firebase Sync Error:", err));
         }
-        // Dispatch local event immediately to update UI in current tab
-        document.dispatchEvent(new Event('firebaseSynced'));
+        // Dispatch local event immediately to update UI in current tab with key detail
+        document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: key } }));
     }
 };
 
 // 5. Native cross-tab storage changes (Only dispatch UI event, never set to Firebase)
 window.addEventListener('storage', (e) => {
     if (DB_KEYS.includes(e.key) && e.newValue !== null && !isSyncingFromFirebase) {
-        // Dispatch local event immediately to update UI in current tab
-        document.dispatchEvent(new Event('firebaseSynced'));
+        // Dispatch local event immediately to update UI in current tab with key detail
+        document.dispatchEvent(new CustomEvent('firebaseSynced', { detail: { key: e.key } }));
     }
 });
 

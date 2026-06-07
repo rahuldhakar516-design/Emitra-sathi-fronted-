@@ -253,23 +253,36 @@
         
         async function getValidPassword() {
             try {
-                const snap = await db.ref('cyberCafePwd').once('value');
-                return snap.exists() ? snap.val() : "Rahul@123";
+                const localPwd = localStorage.getItem('cyberCafePwd');
+                if (localPwd) return JSON.parse(localPwd);
+                if (typeof db !== 'undefined' && db !== null) {
+                    const snap = await db.ref('cyberCafePwd').once('value');
+                    return snap.exists() ? snap.val() : "Rahul@123";
+                }
+                return "Rahul@123";
             } catch(e) { return "Rahul@123"; }
         }
 
         async function getOperators() {
             try {
-                const snap = await db.ref('cyberCafeOperators').once('value');
-                if (!snap.exists()) return [];
-                const data = snap.val();
-                if (Array.isArray(data)) return data.filter(Boolean);
-                return Object.values(data).filter(Boolean);
+                const localData = localStorage.getItem('cyberCafeOperators');
+                if (localData) {
+                    return Object.values(JSON.parse(localData) || []).filter(Boolean);
+                }
+                if (typeof db !== 'undefined' && db !== null) {
+                    const snap = await db.ref('cyberCafeOperators').once('value');
+                    if (snap.exists()) {
+                        const data = snap.val();
+                        if (Array.isArray(data)) return data.filter(Boolean);
+                        return Object.values(data).filter(Boolean);
+                    }
+                }
+                return [];
             } catch(e) { return []; }
         }
 
         async function saveOperators(ops) {
-            await db.ref('cyberCafeOperators').set(ops);
+            localStorage.setItem('cyberCafeOperators', JSON.stringify(ops));
         }
 
         // DOM Elements
@@ -507,7 +520,7 @@
             
             // Save and Redirect
             if (resettingUser === 'admin') {
-                await db.ref('cyberCafePwd').set(nPwd);
+                localStorage.setItem('cyberCafePwd', JSON.stringify(nPwd));
             } else {
                 const operators = await getOperators();
                 const opIndex = operators.findIndex(o => o.mobile === resettingUser);
@@ -660,8 +673,19 @@
             
             if(!name || !mobile || !text) return alert("Please fill all fields");
             
-            const snap = await db.ref('cyberCafeMessages').once('value');
-            let messages = snap.exists() ? snap.val() : [];
+            let messages = [];
+            try {
+                const localMsgs = localStorage.getItem('cyberCafeMessages');
+                if (localMsgs) {
+                    messages = Object.values(JSON.parse(localMsgs) || []).filter(Boolean);
+                } else if (typeof db !== 'undefined' && db !== null) {
+                    const snap = await db.ref('cyberCafeMessages').once('value');
+                    messages = snap.exists() ? snap.val() : [];
+                }
+            } catch (e) {
+                console.error("Error reading messages cache:", e);
+            }
+            
             let newMsg = {
                 mobile: mobile,
                 senderName: name + " (Guest)",
@@ -671,7 +695,7 @@
             };
             messages.push(newMsg);
             
-            await db.ref('cyberCafeMessages').set(messages);
+            localStorage.setItem('cyberCafeMessages', JSON.stringify(messages));
             
             document.getElementById('publicHelpModal').classList.remove('active');
             document.getElementById('helpText').value = '';
